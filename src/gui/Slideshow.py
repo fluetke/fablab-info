@@ -26,9 +26,12 @@ class Slideshow(Slide):
         self.imageLabel = QLabel()
         self.imageLabel.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.imageLabel.setParent(self)
+        self.validityChecker = QImage()
         
         self.slideIterator = 0
         self.timer.timeout.connect(self.nextImage)
+        self.fileList = list()
+        self.currIndex = 0
         
         self.layout = QHBoxLayout()
         self.layout.setMargin(0)
@@ -36,16 +39,19 @@ class Slideshow(Slide):
         self.layout.setAlignment(self.imageLabel, Qt.AlignHCenter)
         self.setLayout(self.layout)
         
-    def setup(self, imgFolder, interval=10):
+    def setup(self, imgFolder, interval=10, cacheSize=10):
         ''' setup the slide for it's display routine '''
         
         self.interval = interval
+        self.cacheSize = cacheSize
+        self.fileList = glob(imgFolder + "/*.jpg")
         
-        for img in glob(imgFolder + "/*.jpg"): #TODO: Fix the path handling here to make it crossplattform
-            might_be_image = QImage()
-            if might_be_image.load(img) :
-                print("File is image")
-                self.imgList.append(might_be_image)
+        while len(self.imgList) < self.cacheSize:
+            if self.validityChecker.load(self.fileList[self.currIndex%len(self.fileList)]):
+                self.imgList.append(self.validityChecker)
+                print("Image file found - caching it")
+            self.currIndex += 1
+
     
     def run(self):
         ''' run the widgets display routine '''
@@ -59,19 +65,27 @@ class Slideshow(Slide):
         (which should be QMainWindow). 
         Then generate a pixmap from the scaled 
         image and display it on a QLabel'''
-        
-        image = self.imgList[self.slideIterator%len(self.imgList)]
+    
+        image = self.imgList[(self.currIndex+1)%len(self.imgList)]
             
         currImage = QPixmap.fromImage(image.scaledToHeight(self.parentWidget().height(), Qt.SmoothTransformation))
         self.imageLabel.setPixmap(currImage)
-        self.slideIterator += 1
+        
+        if self.validityChecker.load(self.fileList[self.currIndex%len(self.fileList)]):
+            self.imgList[self.currIndex%len(self.imgList)] = self.validityChecker
+            print("Preloading next image")
+    
+        self.currIndex += 1
         
     def stop(self):
         Slide.stop(self)
         self.timer.stop()
+        self.currIndex=0
 
     def shutdown(self):
         qWarning("Shutting down Slideshow-Module, this will purge all loaded images! \nTo pause, use stop() instead")
         Slide.shutdown(self)
         self.timer.stop()
         self.imgList.clear()
+        self.fileList.clear()
+        self.currIndex=0

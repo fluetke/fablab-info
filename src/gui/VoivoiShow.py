@@ -9,7 +9,7 @@ from PyQt4.Qt import QImage, QPixmap, QSizePolicy, Qt, QPainter,\
     QTimer, qWarning, QColor, qRgb, QFont, QRect
 from PyQt4.QtGui import QLabel, QHBoxLayout, QFontMetrics
 import pymysql
-from urllib.request import urlopen
+import urllib3
 from _datetime import datetime
 
 class VoivoiShow(Slide):
@@ -39,6 +39,8 @@ class VoivoiShow(Slide):
         self.imageLabel = QLabel()
         self.imageLabel.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.imageLabel.setParent(self)
+
+        self.httpPool = urllib3.PoolManager()
         
         self.slideIterator = 0
         self.timer.timeout.connect(self.nextImage)
@@ -91,17 +93,19 @@ class VoivoiShow(Slide):
                             continue
                         self.mostRecent = entry[4]
                         image_url = "http://voivoi.eventfive.de/events/" + str(entry[5]) + "/uploads/" + str(entry[0]) + "_" + str(entry[1]) + "_" + str(entry[2]) + ".jpg"
-                        data = urlopen(image_url).read()
-                        print("Newer image found")
-                        #print(data)
-                        might_be_image = QImage()
-                        if might_be_image.loadFromData(data) :
-                            #print("URL is valid")
-                            self.drawOverlay(might_be_image, entry)
+                        req = self.httpPool.request('GET',image_url)
+                        if req.status == 200:
+                            data = req.data
+                            print("Newer file downloaded")
+                                
+                            might_be_image = QImage()
+                            if might_be_image.loadFromData(data) :
+                                #print("URL is valid")
+                                self.drawOverlay(might_be_image, entry)
                             
-                            if len(self.imgList) > buffer_limit-1: #TODO: change behaviour to iteration over fixed list, to prevent jumps
-                                self.imgList.pop(1)
-                            self.imgList.append(might_be_image)
+                                if len(self.imgList) > buffer_limit-1: #TODO: change behaviour to iteration over fixed list, to prevent jumps
+                                    self.imgList.pop(1)
+                                self.imgList.append(might_be_image)
                                
         finally: 
             print("Update done, closing connection")
