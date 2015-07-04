@@ -29,6 +29,7 @@ class Slideshow(Slide):
         self.validityChecker = QImage()
         
         self.slideIterator = 0
+        self.interval = 1
         self.timer.timeout.connect(self.nextImage)
         self.fileList = list()
         self.currIndex = 0

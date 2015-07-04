@@ -4,7 +4,7 @@ Created on 05.05.2015
 @author: Florian
 '''
 from gui.Slide import Slide
-import requests
+#import requests
 from icalendar import cal
 from datetime import datetime, tzinfo, date
 import pytz

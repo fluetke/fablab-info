@@ -16,6 +16,6 @@ if __name__ == '__main__':
     
     window = MainWindow()
     window.showFullScreen()
-    window.run(5000)
+    window.run(30000)
     
     app.exec_()
