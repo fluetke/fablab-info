@@ -51,8 +51,9 @@ class MainWindow(QMainWindow):
     def run(self,interval):
         self.timer.start(interval)
         self.defaultWidgetLayout.addWidget(self.widgetList[self.slideIterator%len(self.widgetList)])
-        self.widgetList[self.slideIterator%len(self.widgetList)].run()
-        self.slideIterator+=1
+        self.nextSlide()
+        #self.widgetList[self.slideIterator%len(self.widgetList)].run()
+        #self.slideIterator+=1
     
     # TODO: fix problems with slide changes causing slides to fall out of scope
     def nextSlide(self):
